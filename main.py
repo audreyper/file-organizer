@@ -1,51 +1,81 @@
-import os
-import shutil
+# Import necessary modules
 from pathlib import Path
+import yaml
+import logging
 
-# Define file categories and their corresponding file extensions
-categories = {"Audios": [".aif", ".cda", ".mid.mp3", ".mpa", ".ogg", ".wav", ".wma", ".wpl", ".midi"],
-            "Compressed": [".7z", ".arj", ".deb", ".pkg", ".rar", ".rpm", ".tar", ".z", ".zip", ".gz"],
-            "Documents": [".bin", ".dmg", ".iso", ".toast", ".vcd", ".csv", ".dat", ".db", ".log", ".mdb", ".sav",
-                          ".sql", ".tar", ".xml", ".dbf", ".email", ".eml", ".emlx", ".msg", ".oft", ".ost", ".pst",
-                          ".vcf", ".asp", ".cer", ".cfm", ".cgi", ".css", ".htm", ".js", ".jsp", ".part", ".php", ".py",
-                          ".rss", ".xhtml", ".fnt", ".fon", ".otf", ".ttf", ".doc", ".odt", ".pdf", ".rtf", ".tex",
-                          ".txt", ".wpd", ".key", ".odp", ".pps", ".ppt", ".pptx", ".c", ".cgi", ".class", ".cpp",
-                          ".cs", ".h", ".java", ".php", ".py", ".sh", ".swift", ".vb", ".ods", ".xls", ".xlsm", ".xlsx",
-                          ".docx", ".aspx", ".html"],
-            "Images": [".ai", ".bmp", ".gif", ".ico", ".jpeg", ".png", ".ps", ".psd", ".svg", ".tif", ".jpg", ".tiff"],
-            "Videos": [".3g2", ".3gp", ".avi", ".flv", ".h264", ".m4v", ".mkv", ".mov", ".mp4", ".mpg.rm", ".swf",
-                       ".vob", ".wmv", ".mpeg", ".webm"],
-            "Setups": [".apk", ".bat", ".bin", ".cgi", ".com", ".exe", ".gadget", ".jar", ".msi", ".py", ".wsf"],
-            "Systemfiles": [".bak", ".cab", ".cfg", ".cpl", ".cur", ".dll", ".dmp", ".drv", ".icns", ".ico", ".ini",
-                            ".lnk", ".msi",
-                            ".sys", ".tmp"]}
-
-# Assign the initial directory
-initial_dir = '/path/to/dir/to/organize'
- 
+# YAML import setup
+def load_categories(yaml_path):
+    try:
+        # Attempt to open and load categories from 'categories.yaml'
+        with open('categories.yaml', 'r') as file:
+            return yaml.safe_load(file)
+    except FileNotFoundError:
+        # Log an error if 'categories.yaml' is not found
+        logging.error(f"Categories file '{yaml_path}' not found.")
+    except yaml.YAMLError as e:
+        # Log an error if there's an issue loading categories from the file
+        logging.error(f"Error loading categories: {e}")
+     
 # Iterate over files in the initial directory
-files = Path(initial_dir).glob('*')
-for file in files:
-    # Get the file extension
-    extension = file.suffix.lower()
+def file_organizer(categories, initial_dir_path):
+    # Get a list of files in the specified directory
+    files = initial_dir_path.glob('*')
+    for file in files:
+        # Get the file extension
+        extension = file.suffix.lower()
+        # Call the mover function to organize the file
+        mover(extension, file, categories, initial_dir_path)
 
+
+def mover(extension, file, categories, initial_dir_path): 
     # Check the file extension against categories dictionary
     for key, value in categories.items():
         if extension in value:
-            cat_dir = initial_dir + "/" + key
             # Create a directory for the category if it doesn't exist
-            if not os.path.exists(cat_dir):
-                os.makedirs(cat_dir)
+            cat_dir = initial_dir_path / key
+            cat_dir.mkdir(parents=True, exist_ok=True)
             # Move the file to the corresponding category directory
-            destination = f'{cat_dir}/{file.name}'
-            shutil.move(str(file), destination)
+            destination = cat_dir / file.name
+            file.rename(destination)
             break
 
+def configure_logging():
+    # Configure logging with a StreamHandler to display log messages on the console
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler()])
 
-            
-            
 
+def main():
+    # Configure logging for the entire application
+    configure_logging()
+
+    # Define the initial directory path and the categories file path
+    initial_dir_path = Path('/home/audrey/Downloads')
+    categories_file_path = 'categories.yaml'
+    
+    # Load categories from the specified file
+    categories = load_categories(categories_file_path)
+
+    if categories: 
+        # Organize files in the initial directory based on categories
+        file_organizer(categories, initial_dir_path)
+            
+if __name__ == "__main__":
+    # Execute the main function when the script is run
+    main()
 
 
 
  
+
+
+
+
+
+
+
+
+
+
