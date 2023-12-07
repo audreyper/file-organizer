@@ -2,16 +2,17 @@
 from pathlib import Path
 import yaml
 import logging
+import argparse
 
-# YAML import setup
+#YAML import setup
 def load_categories(yaml_path):
     try:
         # Attempt to open and load categories from 'categories.yaml'
-        with open('categories.yaml', 'r') as file:
+        with open(yaml_path, "r") as file:
             return yaml.safe_load(file)
     except FileNotFoundError:
         # Log an error if 'categories.yaml' is not found
-        logging.error(f"Categories file '{yaml_path}' not found.")
+        logging.error(f"Categories file '{yaml_path}' not found. Please check the file path.")
     except yaml.YAMLError as e:
         # Log an error if there's an issue loading categories from the file
         logging.error(f"Error loading categories: {e}")
@@ -46,21 +47,38 @@ def configure_logging():
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[logging.StreamHandler()])
 
+#Create a command line
+def parse_arguments():
+    # Create an argument parser with a description of the script's purpose
+    parser = argparse.ArgumentParser(description="Organize files based on categories.")
+    
+    # Define command-line arguments for specifying the initial directory and categories file
+    parser.add_argument('--initial-dir', type=str, default='/home/audrey/Downloads', help="Which directory path would you like to organize?")
+    parser.add_argument('--categories-file', type=str, default='categories.yaml', help="What file will you use as a reference to organize the categories?")
+    
+    # Parse the command-line arguments and return the resulting namespace
+    return parser.parse_args()
 
 def main():
+
+    # Parse command-line arguments
+    args = parse_arguments()
+
     # Configure logging for the entire application
     configure_logging()
-
-    # Define the initial directory path and the categories file path
-    initial_dir_path = Path('/home/audrey/Downloads')
-    categories_file_path = 'categories.yaml'
     
     # Load categories from the specified file
-    categories = load_categories(categories_file_path)
+    categories = load_categories(args.categories_file)
 
     if categories: 
+         # Log an informational message about loading categories
+        logging.info(f"Loaded categories from '{args.categories_file}'")
+
         # Organize files in the initial directory based on categories
-        file_organizer(categories, initial_dir_path)
+        file_organizer(categories, Path(args.initial_dir))
+
+        # Log an informational message about organizing the directory 
+        logging.info(f"Directory '{args.initial_dir}' succesfully organized")
             
 if __name__ == "__main__":
     # Execute the main function when the script is run
